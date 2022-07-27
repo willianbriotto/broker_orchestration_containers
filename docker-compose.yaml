@@ -1,0 +1,33 @@
+version: "3.8"
+
+networks:
+  broker_orchestration_containers_network: {}
+
+services:
+  redis:
+    image: redis
+    restart: always
+    env_file:
+      - .env
+    ports:
+      - "6379:6379"
+    networks:
+      - broker_orchestration_containers_network
+
+  broker_orchestration_containers:
+    command: python main.py
+    restart: always
+    image: broker_orchestration_containers_image
+    build: ./
+    env_file:
+      - .env
+    volumes:
+      - ./:/orchestration_containers:rw
+      # Is important that the local docker.sock
+      # be shared to container, because without it
+      # is not possible "send commands" to installed docker
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      - redis
+    networks:
+      - broker_orchestration_containers_network
